@@ -1,0 +1,19 @@
+[package]
+name = "starknet-client-sdk"
+version = "0.1.0"
+edition = "2024"
+
+[[example]]
+name = "mint"
+path = "examples/mint.rs"
+
+[[example]]
+name = "burn"
+path = "examples/burn.rs"
+
+[[example]]
+name = "event_listener"
+path = "examples/event_listener.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
