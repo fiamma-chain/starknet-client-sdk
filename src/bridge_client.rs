@@ -17,13 +17,13 @@ use starknet::{
     signers::{LocalWallet, SigningKey},
 };
 
-pub struct BitveinBridgeClient {
+pub struct BitvmBridgeClient {
     account: SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet>,
     bitvm_bridge_contract: Felt,
     btc_light_client_contract: Felt,
 }
 
-impl BitveinBridgeClient {
+impl BitvmBridgeClient {
     pub fn new(
         url: &str,
         bitvm_bridge_contract: &str,

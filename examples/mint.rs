@@ -40,7 +40,8 @@ async fn main() {
     );
 
     // The function is: fn increase_balance(ref self: ContractState, btc_address: ByteArray, amount: u32, amount_extra: u32)
-    let test_string = "xxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyzzzzzzzzzzzzzzzzzqqqqqq123123797Bd3d38989HojiGGYW";
+    let test_string =
+        "xxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyzzzzzzzzzzzzzzzzzqqqqqq123123797Bd3d38989HojiGGYW";
     let test_string = ByteArray::from(test_string);
     let mut raw_test_string = vec![];
     test_string

@@ -1,6 +1,6 @@
 use crate::types::{
-    BURN_EVENT_SELECTOR, BurnEventData, BurnEventDataWithoutKey, MINT_EVENT_SELECTOR, MintEventData,
-    TEST_EVENT_SELECTOR, TestEventData, TestEventDataWithoutKey, TransactionEvent,
+    BURN_EVENT_SELECTOR, BurnEventData, BurnEventDataWithoutKey, MINT_EVENT_SELECTOR,
+    MintEventData, TEST_EVENT_SELECTOR, TestEventData, TestEventDataWithoutKey, TransactionEvent,
 };
 use starknet::core::{
     codec::Decode,

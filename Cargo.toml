@@ -8,10 +8,6 @@ name = "mint"
 path = "examples/mint.rs"
 
 [[example]]
-name = "burn"
-path = "examples/burn.rs"
-
-[[example]]
 name = "event_listener"
 path = "examples/event_listener.rs"
 
