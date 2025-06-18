@@ -1,11 +1,4 @@
-use starknet::{
-    accounts::{Account, ExecutionEncoding, SingleOwnerAccount},
-    core::{
-        chain_id as starknet_chain_id,
-        types::{Call, Felt},
-        utils::{cairo_short_string_to_felt, get_selector_from_name},
-    },
-};
+use starknet::core::{chain_id as starknet_chain_id, types::Felt};
 
 #[derive(Debug, Clone, Copy)]
 pub enum StarknetChainId {

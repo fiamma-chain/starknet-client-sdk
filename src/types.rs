@@ -1,17 +1,85 @@
 use serde::{Deserialize, Serialize};
-use starknet::{
-    accounts::{Account, ExecutionEncoding, SingleOwnerAccount},
-    core::{
-        codec::Encode,
-        types::{ByteArray, Call, Felt, U256},
-        utils::get_selector_from_name,
-    },
-    providers::{
-        Url,
-        jsonrpc::{HttpTransport, JsonRpcClient},
-    },
-    signers::{LocalWallet, SigningKey},
+use starknet::core::{
+    codec::{Decode, Encode},
+    types::{ByteArray, Felt, U256},
 };
+
+// starknet_keccak("mint")
+pub const MINT_FUNCTION_SELECTOR: Felt =
+    Felt::from_hex_unchecked("0x2f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354");
+
+// starknet_keccak("burn")
+pub const BURN_FUNCTION_SELECTOR: Felt =
+    Felt::from_hex_unchecked("0x3e8cfd4725c1e28fa4a6e3e468b4fcf75367166b850ac5f04e33ec843e82c1");
+
+// starknet_keccak("Mint")
+pub const MINT_EVENT_SELECTOR: Felt =
+    Felt::from_hex_unchecked("0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16");
+
+// starknet_keccak("Burn")
+pub const BURN_EVENT_SELECTOR: Felt =
+    Felt::from_hex_unchecked("0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744");
+
+// starknet_keccak("BalanceIncreased")
+pub const TEST_EVENT_SELECTOR: Felt =
+    Felt::from_hex_unchecked("0x31f8daa2ac8dacd06ab968bad8f97f98f63c30a86dbfcebdd7625f589d4e7e6");
+
+// TODO: this is only for test
+#[derive(Debug, PartialEq, Eq, Decode)]
+pub struct TestEventDataWithoutKey {
+    pub bob: ByteArray,
+    pub amount: u32,
+}
+
+#[derive(Debug)]
+pub enum TransactionEvent {
+    Mint(MintEventData),
+    Burn(BurnEventData),
+    Test(TestEventData), // TODO: this is only for test
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct MintEventData {
+    pub to: String,
+    pub value: u64,
+}
+
+#[derive(Debug, PartialEq, Eq, Decode)]
+pub struct BurnEventDataWithoutKey {
+    pub btc_addr: ByteArray,
+    pub fee_rate: u32,
+    pub value: u64,
+    pub operator_id: u32,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BurnEventData {
+    pub from: String,
+    pub btc_addr: String,
+    pub fee_rate: u32,
+    pub value: u64,
+    pub operator_id: u32,
+}
+
+impl BurnEventData {
+    pub fn from_without_key(from: String, data: &BurnEventDataWithoutKey) -> Self {
+        Self {
+            from,
+            btc_addr: String::try_from(data.btc_addr.clone()).unwrap(),
+            fee_rate: data.fee_rate,
+            value: data.value,
+            operator_id: data.operator_id,
+        }
+    }
+}
+
+// TODO: this is only for test, remove this after mint & burn is ready
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct TestEventData {
+    pub alice: String,
+    pub bob: String,
+    pub value: u32,
+}
 
 #[derive(Debug, Clone)]
 pub struct PegContext {

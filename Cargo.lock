@@ -1709,7 +1709,9 @@ name = "starknet-client-sdk"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "crypto-bigint",
+ "hex",
  "serde",
  "starknet",
  "tokio",

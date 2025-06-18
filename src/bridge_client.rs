@@ -133,7 +133,7 @@ impl BitveinBridgeClient {
         let block_height = block_height
             .first()
             .ok_or(anyhow::anyhow!("No block height found"))?;
-        Ok(felt_to_u64(block_height)?)
+        felt_to_u64(block_height)
     }
 
     pub async fn query_min_confirmations(&self) -> anyhow::Result<u64> {
@@ -149,7 +149,7 @@ impl BitveinBridgeClient {
         let min_confirmations = min_confirmations
             .first()
             .ok_or(anyhow::anyhow!("No min confirmations found"))?;
-        Ok(felt_to_u64(min_confirmations)?)
+        felt_to_u64(min_confirmations)
     }
 
     async fn query_light_client_state(&self, fc: &FunctionCall) -> anyhow::Result<Vec<Felt>> {
