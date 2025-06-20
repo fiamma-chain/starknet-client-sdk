@@ -5,7 +5,7 @@ use starknet::core::{
 };
 
 #[allow(dead_code)]
-pub use starknet::core::types::{ExecutionResult, TransactionExecutionStatus};
+pub use starknet::core::types::{ExecutionResult, TransactionExecutionStatus, Felt as StarknetAddress};
 
 // starknet_keccak("mint")
 pub const MINT_FUNCTION_SELECTOR: Felt =
