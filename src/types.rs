@@ -4,7 +4,7 @@ use starknet::core::{
     types::{ByteArray, Felt, U256},
 };
 
-pub use starknet::core::types::TransactionStatus;
+pub use starknet::core::types::ExecutionResult;
 
 // starknet_keccak("mint")
 pub const MINT_FUNCTION_SELECTOR: Felt =

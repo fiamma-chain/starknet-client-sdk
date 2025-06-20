@@ -1,8 +1,9 @@
 use crate::{
     chain::StarknetChainId,
-    types::{Peg, PegContext, TransactionStatus},
+    types::{ExecutionResult, Peg, PegContext},
     utils::felt_to_u64,
 };
+use anyhow::Ok;
 use starknet::{
     accounts::{Account, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount},
     core::{
@@ -152,13 +153,18 @@ impl BitvmBridgeClient {
         felt_to_u64(min_confirmations)
     }
 
-    pub async fn get_transaction_status(&self, tx_hash: &str) -> anyhow::Result<TransactionStatus> {
+    pub async fn get_transaction_receipt(&self, tx_hash: &str) -> anyhow::Result<ExecutionResult> {
         let tx_hash = Felt::from_hex(tx_hash)?;
-        self.account
+        let exe_res = self
+            .account
             .provider()
-            .get_transaction_status(tx_hash)
+            .get_transaction_receipt(tx_hash)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get transaction status with error: {:?}", e))
+            .map_err(|e| anyhow::anyhow!("Failed to get transaction status with error: {:?}", e))?
+            .receipt
+            .execution_result()
+            .clone();
+        Ok(exe_res)
     }
 
     async fn query_light_client_state(&self, fc: &FunctionCall) -> anyhow::Result<Vec<Felt>> {
