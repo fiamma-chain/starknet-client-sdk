@@ -4,7 +4,8 @@ use starknet::core::{
     types::{ByteArray, Felt, U256},
 };
 
-pub use starknet::core::types::ExecutionResult;
+#[allow(dead_code)]
+pub use starknet::core::types::{ExecutionResult, TransactionExecutionStatus};
 
 // starknet_keccak("mint")
 pub const MINT_FUNCTION_SELECTOR: Felt =
