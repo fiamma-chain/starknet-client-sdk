@@ -1,6 +1,6 @@
 use crate::{
     chain::StarknetChainId,
-    types::{Peg, PegContext},
+    types::{Peg, PegContext, TransactionStatus},
     utils::felt_to_u64,
 };
 use starknet::{
@@ -150,6 +150,15 @@ impl BitvmBridgeClient {
             .first()
             .ok_or(anyhow::anyhow!("No min confirmations found"))?;
         felt_to_u64(min_confirmations)
+    }
+
+    pub async fn get_transaction_status(&self, tx_hash: &str) -> anyhow::Result<TransactionStatus> {
+        let tx_hash = Felt::from_hex(tx_hash)?;
+        self.account
+            .provider()
+            .get_transaction_status(tx_hash)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get transaction status with error: {:?}", e))
     }
 
     async fn query_light_client_state(&self, fc: &FunctionCall) -> anyhow::Result<Vec<Felt>> {

@@ -4,6 +4,8 @@ use starknet::core::{
     types::{ByteArray, Felt, U256},
 };
 
+pub use starknet::core::types::TransactionStatus;
+
 // starknet_keccak("mint")
 pub const MINT_FUNCTION_SELECTOR: Felt =
     Felt::from_hex_unchecked("0x2f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354");
