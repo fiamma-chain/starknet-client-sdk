@@ -160,7 +160,7 @@ impl BitvmBridgeClient {
             .provider()
             .get_transaction_receipt(tx_hash)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get transaction status with error: {:?}", e))?
+            .map_err(|e| anyhow::anyhow!("Failed to get transaction receipt with error: {:?}", e))?
             .receipt
             .execution_result()
             .clone();
