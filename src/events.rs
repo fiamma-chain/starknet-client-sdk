@@ -1,5 +1,5 @@
 use crate::{
-    types::{TEST_EVENT_SELECTOR, TransactionEvent},
+    types::{BURN_EVENT_SELECTOR, MINT_EVENT_SELECTOR, TransactionEvent},
     utils::{block_timestamp, parse_event},
 };
 use async_trait::async_trait;
@@ -48,6 +48,8 @@ pub struct EventMonitor {
 
 impl EventMonitor {
     const CHUNK_SIZE: u64 = 100;
+    const CONFIRMED_BLOCKS: u64 = 6;
+    const BLOCKS_PER_BATCH: u64 = 100;
 
     pub fn new(
         contract_address: &str,
@@ -71,89 +73,115 @@ impl EventMonitor {
     pub async fn process(&mut self) -> anyhow::Result<()> {
         let latest_block_number = self.latest_block_number().await?;
 
-        if latest_block_number > self.last_processed_height {
-            let next_height = self.last_processed_height + 1;
+        // Safety check: ensure we have enough confirmed blocks
+        if latest_block_number < Self::CONFIRMED_BLOCKS {
+            return Ok(());
+        }
 
-            // The events are paginated, so we need to use a continuation token to get the next chunk
+        let end_block = latest_block_number - Self::CONFIRMED_BLOCKS;
+
+        // Early return if nothing to process
+        if self.last_processed_height >= end_block {
+            return Ok(());
+        }
+
+        let mut current_block = self.last_processed_height;
+
+        while current_block < end_block {
+            let from_height = current_block + 1;
+            let to_height = (from_height + Self::BLOCKS_PER_BATCH - 1).min(end_block);
+
+            // Process events for this batch of blocks
             let mut continuation_token = None;
+
             loop {
                 let response = self
                     .provider
                     .get_events(
                         EventFilter {
-                            from_block: Some(BlockId::Number(next_height)),
-                            to_block: Some(BlockId::Number(next_height)),
+                            from_block: Some(BlockId::Number(from_height)),
+                            to_block: Some(BlockId::Number(to_height)),
                             address: Some(self.contract_address),
-                            // keys: Some(vec![vec![MINT_EVENT_SELECTOR, BURN_EVENT_SELECTOR]]),
-                            keys: Some(vec![vec![TEST_EVENT_SELECTOR]]),
+                            keys: Some(vec![vec![MINT_EVENT_SELECTOR, BURN_EVENT_SELECTOR]]),
                         },
                         continuation_token,
                         Self::CHUNK_SIZE,
                     )
                     .await?;
 
-                // Get block timestamp from the block
-                let block_timestamp = if !response.events.is_empty() {
-                    let block_with_txs = self
-                        .provider
-                        .get_block_with_tx_hashes(BlockId::Number(next_height))
-                        .await?;
-                    block_timestamp(&block_with_txs)
-                } else {
-                    0
-                };
-
-                // Process events here
+                // Process events in this response
                 for event in response.events {
-                    let block_number = event.block_number.unwrap_or(0);
-                    let tx_hash = format!("0x{:x}", event.transaction_hash);
-                    println!(
-                        "block_number: {}, block_timestamp: {}, tx_hash: {}",
-                        block_number, block_timestamp, tx_hash
-                    );
-                    if let Ok(parsed_event) = parse_event(&event) {
-                        match parsed_event {
-                            TransactionEvent::Test(test_event) => {
-                                println!("test_event: {:?}", test_event);
-                            }
-                            TransactionEvent::Mint(mint_event) => {
-                                self.handler
-                                    .handle_mint(
-                                        block_number,
-                                        block_timestamp,
-                                        &tx_hash,
-                                        &mint_event.to,
-                                        mint_event.value,
-                                    )
-                                    .await?;
-                            }
-                            TransactionEvent::Burn(burn_event) => {
-                                self.handler
-                                    .handle_burn(
-                                        block_number,
-                                        block_timestamp,
-                                        &tx_hash,
-                                        &burn_event.from,
-                                        &burn_event.btc_addr,
-                                        burn_event.value,
-                                        burn_event.fee_rate as u64,
-                                        burn_event.operator_id as u64,
-                                    )
-                                    .await?;
-                            }
-                        }
+                    if let Err(e) = self.process_single_event(event).await {
+                        eprintln!("Error processing event: {}", e);
+                        // Continue processing other events rather than failing completely
                     }
                 }
 
                 // Update continuation token for next iteration
                 continuation_token = response.continuation_token;
 
-                // If no continuation token, we've got all events
+                // If no continuation token, we've got all events for this batch
                 if continuation_token.is_none() {
                     break;
                 }
             }
-            self.last_processed_height = next_height;
+
+            current_block = to_height;
+        }
+
+        self.last_processed_height = current_block;
+        Ok(())
+    }
+
+    async fn process_single_event(
+        &self,
+        event: starknet::core::types::EmittedEvent,
+    ) -> anyhow::Result<()> {
+        let block_number = event.block_number.unwrap_or(0);
+        let tx_hash = format!("0x{:x}", event.transaction_hash);
+
+        // Get block timestamp (cache this if processing many events from same block)
+        let block_timestamp = if block_number > 0 {
+            let block_with_txs = self
+                .provider
+                .get_block_with_tx_hashes(BlockId::Number(block_number))
+                .await?;
+            block_timestamp(&block_with_txs)
+        } else {
+            0
+        };
+
+        if let Ok(parsed_event) = parse_event(&event) {
+            match parsed_event {
+                TransactionEvent::Test(test_event) => {
+                    println!("Test event: {:?}", test_event);
+                }
+                TransactionEvent::Mint(mint_event) => {
+                    self.handler
+                        .handle_mint(
+                            block_number,
+                            block_timestamp,
+                            &tx_hash,
+                            &mint_event.to,
+                            mint_event.value,
+                        )
+                        .await?;
+                }
+                TransactionEvent::Burn(burn_event) => {
+                    self.handler
+                        .handle_burn(
+                            block_number,
+                            block_timestamp,
+                            &tx_hash,
+                            &burn_event.from,
+                            &burn_event.btc_addr,
+                            burn_event.value,
+                            burn_event.fee_rate as u64,
+                            burn_event.operator_id as u64,
+                        )
+                        .await?;
+                }
+            }
         }
         Ok(())
     }

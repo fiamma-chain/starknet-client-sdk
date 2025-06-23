@@ -41,7 +41,7 @@ pub fn parse_event(event: &EmittedEvent) -> anyhow::Result<TransactionEvent> {
         )?;
         Ok(TransactionEvent::Mint(MintEventData { to, value }))
     } else if *key == BURN_EVENT_SELECTOR {
-        let from = parse_cairo_short_string(&event.keys[1])?;
+        let from = format!("0x{:x}", &event.keys[1]);
         let other = BurnEventDataWithoutKey::decode(&event.data)?;
         Ok(TransactionEvent::Burn(BurnEventData::from_without_key(
             from, &other,

@@ -1,6 +1,6 @@
 use crate::{
     chain::StarknetChainId,
-    types::{ExecutionResult, Peg, PegContext, MINT_FUNCTION_SELECTOR, BURN_FUNCTION_SELECTOR},
+    types::{BURN_FUNCTION_SELECTOR, ExecutionResult, MINT_FUNCTION_SELECTOR, Peg, PegContext},
     utils::felt_to_u64,
 };
 use anyhow::Ok;
@@ -98,7 +98,7 @@ impl BitvmBridgeClient {
     ) -> anyhow::Result<String> {
         // Encode the calldata
         let mut calldata = vec![];
-        
+
         // Encode each parameter according to the contract ABI
         ByteArray::from(btc_address).encode(&mut calldata)?;
         fee_rate.encode(&mut calldata)?;

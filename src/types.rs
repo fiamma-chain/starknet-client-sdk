@@ -6,7 +6,9 @@ use starknet::core::{
 };
 
 #[allow(dead_code)]
-pub use starknet::core::types::{ExecutionResult, TransactionExecutionStatus, Felt as StarknetAddress};
+pub use starknet::core::types::{
+    ExecutionResult, Felt as StarknetAddress, TransactionExecutionStatus,
+};
 
 // starknet_keccak("mint")
 pub const MINT_FUNCTION_SELECTOR: Felt =
@@ -123,9 +125,10 @@ impl TryFrom<PegContext> for Peg {
 
     fn try_from(ctx: PegContext) -> Result<Self, Self::Error> {
         let to = Felt::from_hex(&ctx.to)?;
-        
+
         // Convert merkle proof more efficiently using iterator
-        let merkle_proof: Vec<U256> = ctx.bitcoin_merkle_proof
+        let merkle_proof: Vec<U256> = ctx
+            .bitcoin_merkle_proof
             .iter()
             .map(|&hash| U256::from(crypto_bigint::U256::from_be_bytes(hash)))
             .collect();
