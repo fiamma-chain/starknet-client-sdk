@@ -61,7 +61,7 @@ pub fn block_timestamp(block: &MaybePendingBlockWithTxHashes) -> u64 {
 #[test]
 fn test_event_keys() {
     use starknet::core::utils::get_selector_from_name;
-    let selector = get_selector_from_name("increase_balance").unwrap();
+    let selector = get_selector_from_name("burn").unwrap();
     println!("selector: {:?}", selector);
 }
 

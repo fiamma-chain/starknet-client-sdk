@@ -1,6 +1,6 @@
 use crate::{
     chain::StarknetChainId,
-    types::{ExecutionResult, Peg, PegContext},
+    types::{ExecutionResult, Peg, PegContext, MINT_FUNCTION_SELECTOR, BURN_FUNCTION_SELECTOR},
     utils::felt_to_u64,
 };
 use anyhow::Ok;
@@ -79,8 +79,7 @@ impl BitvmBridgeClient {
             .account
             .execute_v3(vec![Call {
                 to: self.bitvm_bridge_contract,
-                selector: get_selector_from_name("mint")
-                    .map_err(|_| anyhow::anyhow!("Invalid mint selector"))?,
+                selector: MINT_FUNCTION_SELECTOR,
                 calldata,
             }])
             .send()
@@ -111,8 +110,7 @@ impl BitvmBridgeClient {
             .account
             .execute_v3(vec![Call {
                 to: self.bitvm_bridge_contract,
-                selector: get_selector_from_name("burn")
-                    .map_err(|_| anyhow::anyhow!("Invalid burn selector"))?,
+                selector: BURN_FUNCTION_SELECTOR,
                 calldata: raw_calldata,
             }])
             .send()
