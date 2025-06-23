@@ -1,3 +1,4 @@
+use crypto_bigint::Encoding;
 use serde::{Deserialize, Serialize};
 use starknet::core::{
     codec::{Decode, Encode},
@@ -89,20 +90,22 @@ pub struct PegContext {
     pub to: String,
     pub amount: u64,
     pub block_height: u64,
-    // pub block_header: Vec<u8>,
+    pub block_header: Vec<u8>,
     pub bitcoin_tx_hash: [u8; 32],
     pub bitcoin_tx_index: u32,
-    // pub bitcoin_raw_tx: Vec<u8>,
-    // pub bitcoin_merkle_proof: Vec<[u8; 32]>,
+    pub bitcoin_raw_tx: Vec<u8>,
+    pub bitcoin_merkle_proof: Vec<[u8; 32]>,
     pub output_index: u32,
     pub dest_script_hash: [u8; 32],
 }
 
 #[derive(Debug, Encode)]
 pub(crate) struct BtcTxProof {
+    pub block_header: ByteArray,
     pub tx_id: U256,
-    pub tx_index: U256,
-    // pub block_hash: U256,
+    pub tx_index: Felt,
+    pub merkle_proof: Vec<U256>,
+    pub raw_tx: ByteArray,
 }
 
 #[derive(Debug, Encode)]
@@ -123,8 +126,14 @@ impl TryFrom<PegContext> for Peg {
         let value = Felt::from(ctx.amount);
         let block_number = Felt::from(ctx.block_height);
         let inclusion_proof = BtcTxProof {
+            block_header: ByteArray::from(ctx.block_header),
             tx_id: U256::from(crypto_bigint::U256::from_be_slice(&ctx.bitcoin_tx_hash)),
-            tx_index: U256::from(ctx.bitcoin_tx_index),
+            tx_index: Felt::from(ctx.bitcoin_tx_index),
+            merkle_proof: ctx.bitcoin_merkle_proof.iter().map(|h| {
+                let h = crypto_bigint::U256::from_be_bytes(*h);
+                U256::from(h)
+            }).collect(),
+            raw_tx: ByteArray::from(ctx.bitcoin_raw_tx),
         };
         let tx_out_ix = Felt::from(ctx.output_index);
         let dest_script_hash =

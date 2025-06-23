@@ -125,7 +125,7 @@ impl BitvmBridgeClient {
         let block_height = self
             .query_light_client_state(&FunctionCall {
                 contract_address: self.btc_light_client_contract,
-                entry_point_selector: get_selector_from_name("latest_block_height")
+                entry_point_selector: get_selector_from_name("get_latest_block_height")
                     .map_err(|_| anyhow::anyhow!("Invalid latest_block_height selector"))?,
                 calldata: vec![],
             })
