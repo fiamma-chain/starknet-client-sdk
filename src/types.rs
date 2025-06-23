@@ -101,20 +101,20 @@ pub struct PegContext {
 
 #[derive(Debug, Encode)]
 pub(crate) struct BtcTxProof {
-    pub block_header: ByteArray,
+    pub block_header: Vec<u8>,
     pub tx_id: U256,
-    pub tx_index: Felt,
+    pub tx_index: u32,
     pub merkle_proof: Vec<U256>,
-    pub raw_tx: ByteArray,
+    pub raw_tx: Vec<u8>,
 }
 
 #[derive(Debug, Encode)]
 pub(crate) struct Peg {
     pub to: Felt,
-    pub value: Felt,
-    pub block_number: Felt,
+    pub value: u64,
+    pub block_num: u32,
     pub inclusion_proof: BtcTxProof,
-    pub tx_out_ix: Felt,
+    pub tx_out_ix: u32,
     pub dest_script_hash: U256,
 }
 
@@ -123,28 +123,28 @@ impl TryFrom<PegContext> for Peg {
 
     fn try_from(ctx: PegContext) -> Result<Self, Self::Error> {
         let to = Felt::from_hex(&ctx.to)?;
-        let value = Felt::from(ctx.amount);
-        let block_number = Felt::from(ctx.block_height);
+        
+        // Convert merkle proof more efficiently using iterator
+        let merkle_proof: Vec<U256> = ctx.bitcoin_merkle_proof
+            .iter()
+            .map(|&hash| U256::from(crypto_bigint::U256::from_be_bytes(hash)))
+            .collect();
+
         let inclusion_proof = BtcTxProof {
-            block_header: ByteArray::from(ctx.block_header),
+            block_header: ctx.block_header,
             tx_id: U256::from(crypto_bigint::U256::from_be_slice(&ctx.bitcoin_tx_hash)),
-            tx_index: Felt::from(ctx.bitcoin_tx_index),
-            merkle_proof: ctx.bitcoin_merkle_proof.iter().map(|h| {
-                let h = crypto_bigint::U256::from_be_bytes(*h);
-                U256::from(h)
-            }).collect(),
-            raw_tx: ByteArray::from(ctx.bitcoin_raw_tx),
+            tx_index: ctx.bitcoin_tx_index,
+            merkle_proof,
+            raw_tx: ctx.bitcoin_raw_tx,
         };
-        let tx_out_ix = Felt::from(ctx.output_index);
-        let dest_script_hash =
-            U256::from(crypto_bigint::U256::from_be_slice(&ctx.dest_script_hash));
+
         Ok(Peg {
             to,
-            value,
-            block_number,
+            value: ctx.amount,
+            block_num: ctx.block_height as u32,
             inclusion_proof,
-            tx_out_ix,
-            dest_script_hash,
+            tx_out_ix: ctx.output_index,
+            dest_script_hash: U256::from(crypto_bigint::U256::from_be_slice(&ctx.dest_script_hash)),
         })
     }
 }

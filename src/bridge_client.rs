@@ -63,12 +63,13 @@ impl BitvmBridgeClient {
         }
     }
 
-    pub async fn mint_tokens(&self, ctx: &[PegContext]) -> anyhow::Result<String> {
-        // Parse the inputs to Felt types
-        let pegs = ctx
+    pub async fn mint_tokens(&self, contexts: &[PegContext]) -> anyhow::Result<String> {
+        // Convert contexts to Peg structs
+        let pegs: Result<Vec<Peg>, _> = contexts
             .iter()
             .map(|ctx| Peg::try_from(ctx.clone()))
-            .collect::<Result<Vec<Peg>, anyhow::Error>>()?;
+            .collect();
+        let pegs = pegs?;
 
         // Encode the calldata
         let mut calldata = vec![];
@@ -91,19 +92,18 @@ impl BitvmBridgeClient {
     pub async fn burn_tokens(
         &self,
         btc_address: &str,
+        fee_rate: u32,
         amount: u64,
-        operator_id: u64,
+        operator_id: u32,
     ) -> anyhow::Result<String> {
-        // Parse the inputs to Felt types
-        let btc_address = ByteArray::from(btc_address);
-        let amount = Felt::from(amount);
-        let operator_id = Felt::from(operator_id);
-
         // Encode the calldata
-        let mut raw_calldata = vec![];
-        btc_address.encode(&mut raw_calldata)?;
-        raw_calldata.push(amount);
-        raw_calldata.push(operator_id);
+        let mut calldata = vec![];
+        
+        // Encode each parameter according to the contract ABI
+        ByteArray::from(btc_address).encode(&mut calldata)?;
+        fee_rate.encode(&mut calldata)?;
+        amount.encode(&mut calldata)?;
+        operator_id.encode(&mut calldata)?;
 
         // Execute the burn transaction
         let result = self
@@ -111,7 +111,7 @@ impl BitvmBridgeClient {
             .execute_v3(vec![Call {
                 to: self.bitvm_bridge_contract,
                 selector: BURN_FUNCTION_SELECTOR,
-                calldata: raw_calldata,
+                calldata,
             }])
             .send()
             .await?;
