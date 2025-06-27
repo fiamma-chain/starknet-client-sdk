@@ -138,8 +138,8 @@ impl BitvmBridgeClient {
     pub async fn query_min_confirmations(&self) -> anyhow::Result<u64> {
         let min_confirmations = self
             .query_light_client_state(&FunctionCall {
-                contract_address: self.btc_light_client_contract,
-                entry_point_selector: get_selector_from_name("min_confirmations")
+                contract_address: self.bitvm_bridge_contract,
+                entry_point_selector: get_selector_from_name("get_min_confirmations")
                     .map_err(|_| anyhow::anyhow!("Invalid min_confirmations selector"))?,
                 calldata: vec![],
             })
