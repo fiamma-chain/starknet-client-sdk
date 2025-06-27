@@ -1,6 +1,7 @@
 use crate::{
     chain::StarknetChainId,
-    types::{BURN_FUNCTION_SELECTOR, ExecutionResult, MINT_FUNCTION_SELECTOR, Peg, PegContext},
+    query_client::QueryClient,
+    types::{BURN_FUNCTION_SELECTOR, MINT_FUNCTION_SELECTOR, Peg, PegContext, TransactionStatus},
     utils::felt_to_u64,
 };
 use anyhow::Ok;
@@ -22,6 +23,7 @@ pub struct BitvmBridgeClient {
     account: SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet>,
     bitvm_bridge_contract: Felt,
     btc_light_client_contract: Felt,
+    query_client: QueryClient,
 }
 
 impl BitvmBridgeClient {
@@ -56,10 +58,12 @@ impl BitvmBridgeClient {
             chain_id.to_felt(),
             ExecutionEncoding::New,
         );
+        let query_client = QueryClient::new(url);
         Self {
             account,
             bitvm_bridge_contract,
             btc_light_client_contract,
+            query_client,
         }
     }
 
@@ -75,6 +79,8 @@ impl BitvmBridgeClient {
         let mut calldata = vec![];
         pegs.encode(&mut calldata)?;
 
+        let nonce = self.get_nonce().await?;
+
         // Execute the mint transaction
         let result = self
             .account
@@ -83,6 +89,7 @@ impl BitvmBridgeClient {
                 selector: MINT_FUNCTION_SELECTOR,
                 calldata,
             }])
+            .nonce(nonce)
             .send()
             .await?;
 
@@ -105,6 +112,8 @@ impl BitvmBridgeClient {
         amount.encode(&mut calldata)?;
         operator_id.encode(&mut calldata)?;
 
+        let nonce = self.get_nonce().await?;
+
         // Execute the burn transaction
         let result = self
             .account
@@ -113,10 +122,15 @@ impl BitvmBridgeClient {
                 selector: BURN_FUNCTION_SELECTOR,
                 calldata,
             }])
+            .nonce(nonce)
             .send()
             .await?;
 
         Ok(result.transaction_hash.to_hex_string())
+    }
+
+    pub async fn get_transaction_status(&self, tx_hash: &str) -> anyhow::Result<TransactionStatus> {
+        self.query_client.get_transaction_status(tx_hash).await
     }
 
     pub async fn query_latest_block_height(&self) -> anyhow::Result<u64> {
@@ -151,20 +165,6 @@ impl BitvmBridgeClient {
         felt_to_u64(min_confirmations)
     }
 
-    pub async fn get_transaction_receipt(&self, tx_hash: &str) -> anyhow::Result<ExecutionResult> {
-        let tx_hash = Felt::from_hex(tx_hash)?;
-        let exe_res = self
-            .account
-            .provider()
-            .get_transaction_receipt(tx_hash)
-            .await
-            .map_err(|e| anyhow::anyhow!("Failed to get transaction receipt with error: {:?}", e))?
-            .receipt
-            .execution_result()
-            .clone();
-        Ok(exe_res)
-    }
-
     async fn query_light_client_state(&self, fc: &FunctionCall) -> anyhow::Result<Vec<Felt>> {
         let state = self
             .account
@@ -172,5 +172,14 @@ impl BitvmBridgeClient {
             .call(fc, BlockId::Tag(BlockTag::Latest))
             .await?;
         Ok(state)
+    }
+
+    async fn get_nonce(&self) -> anyhow::Result<Felt> {
+        let nonce = self
+            .account
+            .provider()
+            .get_nonce(BlockId::Tag(BlockTag::Pending), self.account.address())
+            .await?;
+        Ok(nonce)
     }
 }

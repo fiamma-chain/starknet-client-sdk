@@ -7,7 +7,8 @@ use starknet::core::{
 
 #[allow(dead_code)]
 pub use starknet::core::types::{
-    ExecutionResult, Felt as StarknetAddress, TransactionExecutionStatus,
+    ExecutionResult, Felt as StarknetAddress, Transaction, TransactionExecutionStatus,
+    TransactionStatus,
 };
 
 // starknet_keccak("mint")

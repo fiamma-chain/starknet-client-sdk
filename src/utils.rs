@@ -5,7 +5,6 @@ use crate::types::{
 use starknet::core::{
     codec::Decode,
     types::{EmittedEvent, Felt, MaybePendingBlockWithTxHashes},
-    utils::parse_cairo_short_string,
 };
 
 // Make sure the felt is within u64 range
@@ -32,7 +31,7 @@ pub fn parse_event(event: &EmittedEvent) -> anyhow::Result<TransactionEvent> {
             value: other.amount,
         }))
     } else if *key == MINT_EVENT_SELECTOR {
-        let to = parse_cairo_short_string(&event.keys[1])?;
+        let to = format!("0x{:x}", &event.keys[1]);
         let value = felt_to_u64(
             event
                 .data

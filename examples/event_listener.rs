@@ -48,15 +48,15 @@ impl EventHandler for MyEventHandler {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let url = "https://starknet-sepolia.public.blastapi.io/rpc/v0_8";
+    let url = "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/xS1PQwOzOrX7U4AzG9IYnkgMWcdxQbX4";
     let bitvm_bridge_contract_address =
-        "0x014331d2b5b4f9a083941f5c45c402898b76f171343ed3ee4ae38f3a8c08b67b";
+        "0x37f3357511947cc872aad08b97c49986b90479053630bffb8eeb968b757d255";
 
     // Initialize event handler
     let handler = Box::new(MyEventHandler);
 
     // Create and start event monitor
-    let mut monitor = EventMonitor::new(bitvm_bridge_contract_address, url, handler, 880114);
+    let mut monitor = EventMonitor::new(bitvm_bridge_contract_address, url, handler, 890869);
 
     println!("Starting event monitor...");
 
