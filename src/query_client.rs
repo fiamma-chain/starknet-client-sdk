@@ -110,7 +110,12 @@ impl QueryClient {
 
                 // Handle different response formats based on finality_status
                 match result.finality_status.as_str() {
-                    "REJECTED" => Ok(TransactionStatus::Rejected),
+                    "REJECTED" => {
+                        let reason = result
+                            .failure_reason
+                            .unwrap_or_else(|| "Transaction rejected".to_string());
+                        Ok(TransactionStatus::Rejected { reason })
+                    }
                     "ACCEPTED_ON_L1" | "ACCEPTED_ON_L2" => {
                         if let Some(exec_status) = result.execution_status {
                             let execution_result = match exec_status.as_str() {

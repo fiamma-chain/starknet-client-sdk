@@ -12,7 +12,7 @@ name = "event_listener"
 path = "examples/event_listener.rs"
 
 [dependencies]
-starknet = "0.15.1"
+starknet = "0.16.0"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.15.0", features = ["full"] }
 anyhow = "1.0"
