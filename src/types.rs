@@ -131,12 +131,12 @@ impl TryFrom<PegContext> for Peg {
         let merkle_proof: Vec<U256> = ctx
             .bitcoin_merkle_proof
             .iter()
-            .map(|&hash| U256::from(crypto_bigint::U256::from_be_bytes(hash)))
+            .map(|&hash| U256::from(crypto_bigint::U256::from_le_bytes(hash)))
             .collect();
 
         let inclusion_proof = BtcTxProof {
             block_header: ctx.block_header,
-            tx_id: U256::from(crypto_bigint::U256::from_be_slice(&ctx.bitcoin_tx_hash)),
+            tx_id: U256::from(crypto_bigint::U256::from_le_slice(&ctx.bitcoin_tx_hash)),
             tx_index: ctx.bitcoin_tx_index,
             merkle_proof,
             raw_tx: ctx.bitcoin_raw_tx,
